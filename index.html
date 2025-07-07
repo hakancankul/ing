@@ -251,7 +251,10 @@ advice,tavsiye,Can I give you some advice?"></textarea>
       <div class="bg-white rounded shadow-sm p-5">
         <div class="flex justify-between items-center mb-4">
           <h2 class="text-xl font-semibold">Kelimelerim</h2>
-          <div id="wordCount" class="text-sm text-gray-500"></div>
+          <div class="flex items-center space-x-2">
+            <div id="wordCount" class="text-sm text-gray-500"></div>
+            <button id="deleteAllWords" class="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm" title="Tüm kelimeleri sil">Tümünü Sil</button>
+          </div>
         </div>
         <div class="flex flex-wrap items-center justify-between mb-4">
           <div class="flex space-x-4">
@@ -528,6 +531,14 @@ advice,tavsiye,Can I give you some advice?"></textarea>
 
     // --- Sayfa Yüklenince Listele ---
     renderWords();
+
+    // --- Tümünü Sil Butonu ---
+    document.getElementById('deleteAllWords').onclick = function () {
+      if (confirm('Tüm kelimeler silinsin mi? Bu işlem geri alınamaz!')) {
+        localStorage.removeItem('words');
+        renderWords();
+      }
+    };
 
     // --- Toplu Ekleme Modalı ---
     const bulkAddBtn = document.querySelector("#bulkAddBtn2");
