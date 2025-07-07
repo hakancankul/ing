@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kelime Kuzen</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.5.0/echarts.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: "#1E40AF",
+            secondary: "#10B981",
+          },
+          borderRadius: {
+            none: "0px",
+            sm: "4px",
+            DEFAULT: "8px",
+            md: "12px",
+            lg: "16px",
+            xl: "20px",
+            "2xl": "24px",
+            "3xl": "32px",
+            full: "9999px",
+            button: "8px",
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    :where([class^="ri-"])::before {
+      content: "\f3c2";
+    }
+
+    .card-shadow {
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+    input[type="checkbox"] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 20px;
+      height: 20px;
+      border: 2px solid #d1d5db;
+      border-radius: 4px;
+      background-color: white;
+      position: relative;
+      cursor: pointer;
+    }
+
+    input[type="checkbox"]:checked {
+      background-color: #1E40AF;
+      border-color: #1E40AF;
+    }
+
+    input[type="checkbox"]:checked::after {
+      content: "";
+      position: absolute;
+      top: 3px;
+      left: 6px;
+      width: 6px;
+      height: 10px;
+      border: solid white;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 46px;
+      height: 24px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 24px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+
+    input:checked+.slider {
+      background-color: #1E40AF;
+    }
+
+    input:checked+.slider:before {
+      transform: translateX(22px);
+    }
+
+    .custom-range {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 5px;
+      background: #e5e7eb;
+      outline: none;
+    }
+
+    .custom-range::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #1E40AF;
+      cursor: pointer;
+    }
+
+    .custom-range::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #1E40AF;
+      cursor: pointer;
+      border: none;
+    }
+
+    .tab-active {
+      color: #1E40AF;
+      border-bottom: 2px solid #1E40AF;
+    }
+  </style>
+</head>
+
+<body class="bg-gray-50 font-sans text-gray-800">
+  <!-- Üst Navigasyon Bölümü -->
+  <header class="bg-white shadow-sm sticky top-0 z-50">
+    <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center">
+        <h1 class="text-2xl font-['Pacifico'] text-primary">logo</h1>
+        <span class="ml-2 text-lg font-medium">Kelime Kuzen</span>
+      </div>
+      <div class="flex items-center space-x-6">
+        <!-- Header'daki Toplu Ekle butonu kaldırıldı -->
+      </div>
+    </div>
+  </header>
+  <main class="container mx-auto px-4 py-2">
+    <div class="max-w-3xl mx-auto space-y-3">
+      <!-- Toplu Ekle Modalı -->
+      <div id="bulkAddModal" class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded shadow-lg p-6 w-full max-w-lg relative">
+          <button id="closeBulkModal"
+            class="absolute top-2 right-2 text-gray-400 hover:text-primary text-2xl">&times;</button>
+          <h2 class="text-lg font-semibold mb-2">Toplu Kelime Ekle</h2>
+          <div class="mb-2">
+            <textarea id="bulkTextarea" rows="10"
+              class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary"
+              placeholder="Kelime,Türkçesi,Cümle
+achieve,başarmak,She worked hard to achieve her goals.
+advice,tavsiye,Can I give you some advice?"></textarea>
+          </div>
+          <div id="bulkError" class="text-red-600 text-sm mb-2 hidden"></div>
+          <div class="flex justify-end space-x-2">
+            <button id="bulkCancel"
+              class="px-4 py-2 border border-gray-300 rounded-button text-gray-700 hover:bg-gray-50">İptal</button>
+            <button id="bulkSave" class="px-4 py-2 bg-primary text-white rounded-button hover:bg-primary-dark">Toplu
+              Kaydet</button>
+          </div>
+        </div>
+      </div>
+      <!-- Kelime Ekleme Alanı -->
+      <div class="bg-white rounded shadow-sm p-5">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xl font-semibold">Kelime Ekle</h2>
+          <div class="flex space-x-2">
+            <button id="toggleFormBtn"
+              class="bg-secondary text-white px-4 py-2 rounded-button flex items-center whitespace-nowrap"
+              title="Yeni kelime ekle formunu aç/kapat">
+              <i class="ri-add-line mr-1"></i> Yeni Kelime
+            </button>
+            <button id="bulkAddBtn2"
+              class="bg-primary text-white px-4 py-2 rounded-button flex items-center whitespace-nowrap"
+              title="Toplu kelime ekle">
+              <i class="ri-upload-2-line mr-1"></i> Toplu Ekle
+            </button>
+          </div>
+        </div>
+        <form id="addWordForm" class="hidden border border-gray-200 rounded p-4 space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label for="word" class="block text-sm font-medium text-gray-700 mb-1">İngilizce Kelime</label>
+              <input type="text" id="word"
+                class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-primary" />
+            </div>
+            <div>
+              <label for="meaning" class="block text-sm font-medium text-gray-700 mb-1">Türkçe Anlamı</label>
+              <input type="text" id="meaning"
+                class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-primary" />
+            </div>
+          </div>
+          <div>
+            <label for="example" class="block text-sm font-medium text-gray-700 mb-1">Örnek Cümle</label>
+            <div class="relative">
+              <textarea id="example" rows="2"
+                class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-primary"></textarea>
+              <button id="generateAI" class="absolute right-2 bottom-2 text-primary hover:text-primary-dark"
+                title="AI ile örnek cümle oluştur">
+                <div class="w-6 h-6 flex items-center justify-center">
+                  <i class="ri-magic-line"></i>
+                </div>
+              </button>
+            </div>
+          </div>
+          <div class="flex justify-end space-x-3">
+            <button id="cancelAdd"
+              class="px-4 py-2 border border-gray-300 rounded-button text-gray-700 hover:bg-gray-50 whitespace-nowrap"
+              title="Formu kapat">
+              İptal
+            </button>
+            <button id="saveWord" type="submit"
+              class="px-4 py-2 bg-primary text-white rounded-button hover:bg-primary-dark whitespace-nowrap"
+              title="Kelimeyi kaydet">
+              Kaydet
+            </button>
+          </div>
+        </form>
+      </div>
+      <!-- Kelime Listesi -->
+      <div class="bg-white rounded shadow-sm p-5">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xl font-semibold">Kelimelerim</h2>
+          <div id="wordCount" class="text-sm text-gray-500"></div>
+        </div>
+        <div class="flex flex-wrap items-center justify-between mb-4">
+          <div class="flex space-x-4">
+            <button id="tabAll" class="tab-active px-2 py-1 border-b-2 font-medium" data-tab="all">Tümü (<span
+                id="countAll">0</span>)</button>
+            <button id="tabLearned" class="px-2 py-1 border-b-2 font-medium text-gray-500" data-tab="learned">Öğrenildi
+              (<span id="countLearned">0</span>)</button>
+          </div>
+          <div class="relative">
+            <input id="searchInput" type="text" placeholder="Kelime ara..."
+              class="border border-gray-300 rounded px-3 py-1 focus:outline-none focus:ring-1 focus:ring-primary" />
+            <i class="ri-search-line absolute right-2 top-2 text-gray-400"></i>
+          </div>
+        </div>
+        <div id="wordList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+        <div id="pagination" class="flex justify-center mt-4"></div>
+      </div>
+    </div>
+  </main>
+  <script>
+    // --- Yardımcılar ---
+    function getWords() {
+      return JSON.parse(localStorage.getItem("words") || "[]");
+    }
+    function saveWords(words) {
+      localStorage.setItem("words", JSON.stringify(words));
+    }
+    function generateId() {
+      return '_' + Math.random().toString(36).substr(2, 9);
+    }
+
+    // --- DOM Elemanları ---
+    const addWordForm = document.getElementById("addWordForm");
+    const wordInput = document.getElementById("word");
+    const meaningInput = document.getElementById("meaning");
+    const exampleInput = document.getElementById("example");
+    const saveBtn = document.getElementById("saveWord");
+    const cancelBtn = document.getElementById("cancelAdd");
+    const toggleFormBtn = document.getElementById("toggleFormBtn");
+    const wordListDiv = document.getElementById("wordList");
+
+    // --- State ---
+    let editId = null;
+    let currentPage = 1;
+    const PAGE_SIZE = 4;
+    let currentTab = 'all';
+    let searchTerm = '';
+
+    // --- Listeyi Renderla ---
+    function renderWords() {
+      const words = getWords();
+      wordListDiv.innerHTML = "";
+      const wordCountDiv = document.getElementById("wordCount");
+      const paginationDiv = document.getElementById("pagination");
+      const countAll = document.getElementById("countAll");
+      const countLearned = document.getElementById("countLearned");
+      // Filtreleme
+      let filtered = words;
+      if (currentTab === 'learned') filtered = filtered.filter(w => w.status === 'learned');
+      if (searchTerm) filtered = filtered.filter(w => w.word.toLowerCase().includes(searchTerm.toLowerCase()));
+      if (countAll) countAll.textContent = words.length;
+      if (countLearned) countLearned.textContent = words.filter(w => w.status === 'learned').length;
+      if (filtered.length === 0) {
+        if (wordCountDiv) wordCountDiv.textContent = `Toplam: 0`;
+        wordListDiv.innerHTML = '<div class="text-center text-gray-400 py-8">Henüz kelime eklenmedi.</div>';
+        if (paginationDiv) paginationDiv.innerHTML = "";
+        return;
+      }
+      if (wordCountDiv) wordCountDiv.textContent = `Toplam: ${filtered.length}`;
+      // Pagination hesaplama
+      const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+      if (currentPage > totalPages) currentPage = totalPages;
+      if (currentPage < 1) currentPage = 1;
+      const startIdx = (currentPage - 1) * PAGE_SIZE;
+      const endIdx = startIdx + PAGE_SIZE;
+      const pageWords = filtered.slice(startIdx, endIdx);
+      pageWords.forEach(wordObj => {
+        const card = document.createElement("div");
+        card.className = "border border-gray-200 rounded p-4 hover:shadow-md transition-shadow";
+        card.innerHTML = `
+            <div class="flex justify-between items-start mb-2">
+              <div>
+                <h3 class="text-lg font-medium">${wordObj.word}</h3>
+                <p class="text-gray-600">${wordObj.meaning}</p>
+              </div>
+              <label class="switch ml-2" title="Öğrenildi olarak işaretle">
+                <input type="checkbox" class="status-toggle" data-id="${wordObj.id}" ${wordObj.status === 'learned' ? 'checked' : ''}>
+                <span class="slider"></span>
+              </label>
+            </div>
+            <p class="text-sm text-gray-700 italic mb-3">${wordObj.example}</p>
+            <div class="flex justify-end items-center">
+              <div class="flex space-x-2">
+                <button class="text-gray-500 hover:text-primary" title="Düzenle" data-edit-id="${wordObj.id}">
+                  <div class="w-6 h-6 flex items-center justify-center">
+                    <i class="ri-edit-line"></i>
+                  </div>
+                </button>
+                <button class="text-gray-500 hover:text-red-500" title="Sil" data-delete-id="${wordObj.id}">
+                  <div class="w-6 h-6 flex items-center justify-center">
+                    <i class="ri-delete-bin-line"></i>
+                  </div>
+                </button>
+              </div>
+            </div>
+          `;
+        wordListDiv.appendChild(card);
+      });
+      // Pagination arayüzü
+      if (paginationDiv) {
+        let html = '';
+        html += `<button class="px-2 py-1 mx-1 rounded ${currentPage === 1 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white border'}" id="prevPage" ${currentPage === 1 ? 'disabled' : ''}>&lt;</button>`;
+        for (let i = 1; i <= totalPages; i++) {
+          html += `<button class="px-2 py-1 mx-1 rounded ${i === currentPage ? 'bg-primary text-white' : 'bg-white border'}" data-page="${i}">${i}</button>`;
+        }
+        html += `<button class="px-2 py-1 mx-1 rounded ${currentPage === totalPages ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white border'}" id="nextPage" ${currentPage === totalPages ? 'disabled' : ''}>&gt;</button>`;
+        paginationDiv.innerHTML = html;
+      }
+    }
+
+    // Pagination eventleri
+    document.addEventListener("click", function (e) {
+      if (e.target.id === "prevPage") {
+        if (currentPage > 1) {
+          currentPage--;
+          renderWords();
+        }
+      } else if (e.target.id === "nextPage") {
+        const words = getWords();
+        const totalPages = Math.ceil(words.length / PAGE_SIZE);
+        if (currentPage < totalPages) {
+          currentPage++;
+          renderWords();
+        }
+      } else if (e.target.hasAttribute("data-page")) {
+        const page = parseInt(e.target.getAttribute("data-page"));
+        if (!isNaN(page)) {
+          currentPage = page;
+          renderWords();
+        }
+      }
+    });
+
+    // --- Sekme eventleri ---
+    document.addEventListener('click', function (e) {
+      if (e.target.id === 'tabAll') {
+        currentTab = 'all';
+        document.getElementById('tabAll').classList.add('tab-active');
+        document.getElementById('tabAll').classList.remove('text-gray-500');
+        document.getElementById('tabLearned').classList.remove('tab-active');
+        document.getElementById('tabLearned').classList.add('text-gray-500');
+        currentPage = 1;
+        renderWords();
+      } else if (e.target.id === 'tabLearned') {
+        currentTab = 'learned';
+        document.getElementById('tabLearned').classList.add('tab-active');
+        document.getElementById('tabLearned').classList.remove('text-gray-500');
+        document.getElementById('tabAll').classList.remove('tab-active');
+        document.getElementById('tabAll').classList.add('text-gray-500');
+        currentPage = 1;
+        renderWords();
+      }
+    });
+
+    // --- Arama eventleri ---
+    document.getElementById('searchInput').addEventListener('input', function (e) {
+      searchTerm = e.target.value;
+      currentPage = 1;
+      renderWords();
+    });
+
+    // --- Toggle eventleri ---
+    wordListDiv.addEventListener('change', function (e) {
+      if (e.target.classList.contains('status-toggle')) {
+        const id = e.target.getAttribute('data-id');
+        let words = getWords();
+        words = words.map(w => w.id === id ? { ...w, status: e.target.checked ? 'learned' : 'learning' } : w);
+        saveWords(words);
+        renderWords();
+      }
+    });
+
+    // --- Kelime Ekle veya Güncelle ---
+    addWordForm.onsubmit = function (e) {
+      e.preventDefault();
+      const word = wordInput.value.trim();
+      const meaning = meaningInput.value.trim();
+      const example = exampleInput.value.trim();
+      if (!word || !meaning || !example) {
+        alert("Lütfen tüm alanları doldurun.");
+        return;
+      }
+      let words = getWords();
+      if (editId) {
+        // Güncelle
+        words = words.map(w => w.id === editId ? { ...w, word, meaning, example } : w);
+        editId = null;
+      } else {
+        // Ekle
+        words.push({ id: generateId(), word, meaning, example, status: 'learning' });
+      }
+      saveWords(words);
+      renderWords();
+      wordInput.value = "";
+      meaningInput.value = "";
+      exampleInput.value = "";
+      addWordForm.classList.add("hidden");
+      toggleFormBtn.innerHTML = '<i class="ri-add-line mr-1"></i> Yeni Kelime';
+      toggleFormBtn.classList.add("bg-secondary");
+      toggleFormBtn.classList.remove("bg-gray-500");
+    };
+
+    // --- Kelime Sil ---
+    wordListDiv.addEventListener("click", function (e) {
+      if (e.target.closest('[data-delete-id]')) {
+        const id = e.target.closest('[data-delete-id]').getAttribute('data-delete-id');
+        if (confirm("Bu kelime silinsin mi?")) {
+          let words = getWords();
+          words = words.filter(w => w.id !== id);
+          saveWords(words);
+          renderWords();
+        }
+      }
+    });
+
+    // --- Kelime Düzenle ---
+    wordListDiv.addEventListener("click", function (e) {
+      if (e.target.closest('[data-edit-id]')) {
+        const id = e.target.closest('[data-edit-id]').getAttribute('data-edit-id');
+        const wordObj = getWords().find(w => w.id === id);
+        if (wordObj) {
+          wordInput.value = wordObj.word;
+          meaningInput.value = wordObj.meaning;
+          exampleInput.value = wordObj.example;
+          addWordForm.classList.remove("hidden");
+          toggleFormBtn.innerHTML = '<i class="ri-close-line mr-1"></i> İptal';
+          toggleFormBtn.classList.remove("bg-secondary");
+          toggleFormBtn.classList.add("bg-gray-500");
+          editId = id;
+        }
+      }
+    });
+
+    // --- Formu Aç/Kapat ---
+    toggleFormBtn.onclick = function () {
+      if (addWordForm.classList.contains("hidden")) {
+        addWordForm.classList.remove("hidden");
+        toggleFormBtn.innerHTML = '<i class="ri-close-line mr-1"></i> İptal';
+        toggleFormBtn.classList.remove("bg-secondary");
+        toggleFormBtn.classList.add("bg-gray-500");
+        wordInput.focus();
+      } else {
+        addWordForm.classList.add("hidden");
+        toggleFormBtn.innerHTML = '<i class="ri-add-line mr-1"></i> Yeni Kelime';
+        toggleFormBtn.classList.add("bg-secondary");
+        toggleFormBtn.classList.remove("bg-gray-500");
+        wordInput.value = "";
+        meaningInput.value = "";
+        exampleInput.value = "";
+        editId = null;
+      }
+    };
+
+    cancelBtn.onclick = function () {
+      addWordForm.classList.add("hidden");
+      toggleFormBtn.innerHTML = '<i class="ri-add-line mr-1"></i> Yeni Kelime';
+      toggleFormBtn.classList.add("bg-secondary");
+      toggleFormBtn.classList.remove("bg-gray-500");
+      wordInput.value = "";
+      meaningInput.value = "";
+      exampleInput.value = "";
+      editId = null;
+    };
+
+    // --- Sayfa Yüklenince Listele ---
+    renderWords();
+
+    // --- Toplu Ekleme Modalı ---
+    const bulkAddBtn = document.querySelector("#bulkAddBtn2");
+    const bulkAddModal = document.getElementById("bulkAddModal");
+    const closeBulkModal = document.getElementById("closeBulkModal");
+    const bulkTextarea = document.getElementById("bulkTextarea");
+    const bulkSave = document.getElementById("bulkSave");
+    const bulkCancel = document.getElementById("bulkCancel");
+    const bulkError = document.getElementById("bulkError");
+
+    bulkAddBtn.onclick = function () {
+      bulkAddModal.classList.remove("hidden");
+      bulkTextarea.value = "";
+      bulkError.classList.add("hidden");
+      bulkError.textContent = "";
+    };
+    closeBulkModal.onclick = bulkCancel.onclick = function () {
+      bulkAddModal.classList.add("hidden");
+    };
+
+    bulkSave.onclick = function () {
+      const lines = bulkTextarea.value.split(/\r?\n/).map(l => l.trim()).filter(l => l);
+      if (lines.length === 0) {
+        bulkError.textContent = "Lütfen en az bir satır girin.";
+        bulkError.classList.remove("hidden");
+        return;
+      }
+      let words = getWords();
+      let added = 0, skipped = 0, errors = [];
+      let startIdx = 0;
+      // Başlık satırı kontrolü
+      if (/kelime|türkçesi|cümle/i.test(lines[0])) startIdx = 1;
+      for (let i = startIdx; i < lines.length; i++) {
+        let line = lines[i];
+        let parts = line.split(/[,;\t]/).map(p => p.trim());
+        if (parts.length < 2) {
+          errors.push(`${i + 1}. satır: Eksik alan.`);
+          continue;
+        }
+        let [word, meaning, example] = parts;
+        if (!word || !meaning) {
+          errors.push(`${i + 1}. satır: Kelime ve Türkçesi zorunlu.`);
+          continue;
+        }
+        // Aynı kelimeyi tekrar ekleme
+        if (words.some(w => w.word.toLowerCase() === word.toLowerCase())) {
+          skipped++;
+          continue;
+        }
+        words.push({ id: generateId(), word, meaning, example: example || "", status: 'learning' });
+        added++;
+      }
+      saveWords(words);
+      renderWords();
+      if (errors.length > 0) {
+        bulkError.textContent = errors.join("\n");
+        bulkError.classList.remove("hidden");
+      } else {
+        bulkError.classList.add("hidden");
+        bulkError.textContent = "";
+        bulkAddModal.classList.add("hidden");
+      }
+      if (added > 0 && errors.length === 0) {
+        alert(`${added} kelime eklendi. ${skipped > 0 ? skipped + ' tekrar kelime atlandı.' : ''}`);
+      } else if (added > 0) {
+        alert(`${added} kelime eklendi. ${skipped > 0 ? skipped + ' tekrar kelime atlandı.' : ''}\nBazı satırlarda hata var!`);
+      } else if (skipped > 0) {
+        alert(`${skipped} tekrar kelime atlandı.\nBazı satırlarda hata var!`);
+      }
+    };
+  </script>
+</body>
+
+</html>
