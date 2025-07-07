@@ -366,28 +366,17 @@ advice,tavsiye,Can I give you some advice?"></textarea>
       // Pagination arayüzü
       if (paginationDiv) {
         let html = '';
-        html += `<button class="px-2 py-1 mx-1 rounded ${currentPage === 1 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white border'}" id="prevPage" ${currentPage === 1 ? 'disabled' : ''}>&lt;</button>`;
-        // Sadeleştirilmiş pagination
-        if (totalPages <= 5) {
-          for (let i = 1; i <= totalPages; i++) {
-            html += `<button class="px-2 py-1 mx-1 rounded ${i === currentPage ? 'bg-primary text-white' : 'bg-white border'}" data-page="${i}">${i}</button>`;
-          }
-        } else {
-          if (currentPage > 2) {
-            html += `<button class="px-2 py-1 mx-1 rounded ${currentPage === 1 ? 'bg-primary text-white' : 'bg-white border'}" data-page="1">1</button>`;
-            if (currentPage > 3) html += '<span class="mx-1">...</span>';
-          }
-          for (let i = Math.max(1, currentPage - 1); i <= Math.min(totalPages, currentPage + 1); i++) {
-            if (i !== 1 && i !== totalPages) {
-              html += `<button class="px-2 py-1 mx-1 rounded ${i === currentPage ? 'bg-primary text-white' : 'bg-white border'}" data-page="${i}">${i}</button>`;
-            }
-          }
-          if (currentPage < totalPages - 1) {
-            if (currentPage < totalPages - 2) html += '<span class="mx-1">...</span>';
-            html += `<button class="px-2 py-1 mx-1 rounded ${currentPage === totalPages ? 'bg-primary text-white' : 'bg-white border'}" data-page="${totalPages}">${totalPages}</button>`;
-          }
+        const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+        // 5'li blok mantığı
+        const blockSize = 5;
+        const currentBlock = Math.floor((currentPage - 1) / blockSize);
+        const blockStart = currentBlock * blockSize + 1;
+        const blockEnd = Math.min(blockStart + blockSize - 1, totalPages);
+        html += `<button class="px-2 py-1 mx-1 rounded ${blockStart === 1 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white border'}" id="prevPageBlock" ${blockStart === 1 ? 'disabled' : ''}>&lt;</button>`;
+        for (let i = blockStart; i <= blockEnd; i++) {
+          html += `<button class="px-2 py-1 mx-1 rounded ${i === currentPage ? 'bg-primary text-white' : 'bg-white border'}" data-page="${i}">${i}</button>`;
         }
-        html += `<button class="px-2 py-1 mx-1 rounded ${currentPage === totalPages ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white border'}" id="nextPage" ${currentPage === totalPages ? 'disabled' : ''}>&gt;</button>`;
+        html += `<button class="px-2 py-1 mx-1 rounded ${blockEnd === totalPages ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-white border'}" id="nextPageBlock" ${blockEnd === totalPages ? 'disabled' : ''}>&gt;</button>`;
         paginationDiv.innerHTML = html;
       }
     }
@@ -412,6 +401,20 @@ advice,tavsiye,Can I give you some advice?"></textarea>
           currentPage = page;
           renderWords();
         }
+      } else if (e.target.id === "prevPageBlock") {
+        // 5'li blokta geri
+        const blockSize = 5;
+        const prevBlockStart = Math.max(1, (Math.floor((currentPage - 1) / blockSize) - 1) * blockSize + 1);
+        currentPage = prevBlockStart;
+        renderWords();
+      } else if (e.target.id === "nextPageBlock") {
+        // 5'li blokta ileri
+        const words = getWords();
+        const totalPages = Math.ceil(words.length / PAGE_SIZE);
+        const blockSize = 5;
+        const nextBlockStart = Math.min(totalPages, (Math.floor((currentPage - 1) / blockSize) + 1) * blockSize + 1);
+        currentPage = nextBlockStart;
+        renderWords();
       }
     });
 
