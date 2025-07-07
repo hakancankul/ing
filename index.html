@@ -253,11 +253,13 @@ advice,tavsiye,Can I give you some advice?"></textarea>
           <h2 class="text-xl font-semibold">Kelimelerim</h2>
           <div class="flex items-center space-x-2">
             <div id="wordCount" class="text-sm text-gray-500"></div>
-            <button id="deleteAllWords" class="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm" title="Tüm kelimeleri sil">Tümünü Sil</button>
+            <button id="deleteAllWords" class="ml-2 p-2 bg-gray-100 hover:bg-red-100 rounded-full text-gray-500 hover:text-red-600 transition" title="Tümünü Sil">
+              <i class="ri-delete-bin-line"></i>
+            </button>
           </div>
         </div>
         <div class="flex flex-wrap items-center justify-between mb-4">
-          <div class="flex space-x-4">
+          <div class="flex space-x-4 items-center">
             <button id="tabAll" class="tab-active px-2 py-1 border-b-2 font-medium" data-tab="all">Tümü (<span
                 id="countAll">0</span>)</button>
             <button id="tabLearned" class="px-2 py-1 border-b-2 font-medium text-gray-500" data-tab="learned">Öğrenildi
